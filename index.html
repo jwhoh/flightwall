@@ -148,7 +148,7 @@
   const $ = id => document.getElementById(id);
 
   // ---------- settings ----------
-  const DEFAULTS = { lat: 37.83, lon: -122.21, radius: 25, max: 5, minAlt: 0, fCom: true, fGa: true, fHeli: true, fGround: false, clockMode: '12', base: 'https://api.adsb.lol' };
+  const DEFAULTS = { lat: 37.83, lon: -122.21, radius: 25, max: 5, minAlt: 0, fCom: true, fGa: true, fHeli: true, fGround: false, clockMode: '12', base: 'https://flightwall-proxy.jianwei-hoh.workers.dev' };
   let S = { ...DEFAULTS };
   try { const raw = localStorage.getItem('flightwall'); if (raw) S = { ...DEFAULTS, ...JSON.parse(raw) }; } catch (e) {}
   function persist() { try { localStorage.setItem('flightwall', JSON.stringify(S)); } catch (e) {} }
