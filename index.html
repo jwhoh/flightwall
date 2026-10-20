@@ -11,15 +11,24 @@
 <style>
   :root {
     --bg: #000;
-    --led: #ffb020;          /* amber */
-    --led-dim: #6a4a12;
-    --led-off: #1a1206;
+    --led: #ffb020;
+    --led-dim: color-mix(in srgb, var(--led) 62%, #000);
+    --led-off: color-mix(in srgb, var(--led) 22%, #000);
     --cyan: #3ad7ff;
     --green: #5cff7a;
     --red: #ff5a4a;
     --font: 'Silkscreen', 'Courier New', monospace;
+    --dot-alpha: .45;
+    --dot-size: 6px;
+    --scale: 1;
     color-scheme: dark;
   }
+  :root[data-theme="green"] { --led: #4cff6a; --cyan: #ffd84a; }
+  :root[data-theme="white"] { --led: #f4f4f4; --cyan: #7fd3ff; --green: #8cff9c; }
+  :root[data-theme="ice"]   { --led: #6fd6ff; --cyan: #ffffff; }
+  :root[data-theme="red"]   { --led: #ff4a3c; --cyan: #ffd0c8; --green: #ffb0a0; }
+  :root[data-dots="off"]    { --dot-alpha: 0; }
+  :root[data-dots="strong"] { --dot-alpha: .72; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: var(--bg); color: var(--led); font-family: var(--font); overflow: hidden; -webkit-user-select: none; user-select: none; }
   body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
@@ -27,14 +36,17 @@
   /* LED pixel grid overlay */
   body::after {
     content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 5;
-    background-image: radial-gradient(circle, transparent 38%, rgba(0,0,0,.72) 46%);
-    background-size: 6px 6px;
+    background-image: radial-gradient(circle, transparent 40%, rgba(0,0,0,var(--dot-alpha)) 48%);
+    background-size: var(--dot-size) var(--dot-size);
   }
   @media (max-width: 700px) { body::after { background-size: 4px 4px; } }
+  #screen { font-size: calc(1rem * var(--scale)); }
+  :root[data-size="large"] #screen { --scale: 1.3; }
+  :root[data-size="small"] #screen { --scale: .8; }
 
   #screen { height: 100%; display: flex; flex-direction: column; padding: clamp(14px, 3vw, 40px); gap: clamp(10px, 2vh, 24px); }
 
-  header { display: flex; justify-content: space-between; align-items: baseline; font-size: clamp(14px, 2.2vw, 26px); color: var(--led-dim); }
+  header { display: flex; justify-content: space-between; align-items: baseline; font-size: calc(clamp(14px, 2.2vw, 26px) * var(--scale)); color: var(--led-dim); }
   header .clock { color: var(--led); }
 
   #flights { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: clamp(10px, 2vh, 22px); }
@@ -44,14 +56,18 @@
     grid-template-columns: 1.3fr 1.6fr 1fr 1fr;
     grid-template-areas: "call route alt spd" "air type dst dir";
     column-gap: clamp(10px, 2vw, 28px); row-gap: 4px; align-items: baseline;
-    font-size: clamp(14px, 2.4vw, 30px);
+    font-size: calc(clamp(14px, 2.4vw, 30px) * var(--scale));
     padding-bottom: clamp(8px, 1.6vh, 18px);
     border-bottom: 2px dotted var(--led-off);
   }
   .flight:last-child { border-bottom: none; }
-  .call  { grid-area: call; font-size: clamp(22px, 4.2vw, 56px); font-weight: 700; letter-spacing: .02em; line-height: 1; }
+  .call  { grid-area: call; font-size: calc(clamp(22px, 4.2vw, 56px) * var(--scale)); font-weight: 700; letter-spacing: .02em; line-height: 1; }
   .air   { grid-area: air; color: var(--led-dim); }
-  .route { grid-area: route; color: var(--cyan); font-size: clamp(20px, 3.6vw, 48px); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prog  { grid-area: dir; color: var(--led-dim); }
+  .bar   { display: inline-block; width: 7em; height: .5em; border: 1px solid var(--led-dim); vertical-align: middle; margin-left: .4em; position: relative; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--led); }
+  .flight.away .call { color: var(--led-dim); }
+  .route { grid-area: route; color: var(--cyan); font-size: calc(clamp(20px, 3.6vw, 48px) * var(--scale)); line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .route .arrow { color: var(--led-dim); margin: 0 .25em; }
   .type  { grid-area: type; color: var(--led-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .alt   { grid-area: alt; }
@@ -75,7 +91,7 @@
   footer .err { color: var(--red); }
 
   /* settings */
-  #gear { position: fixed; top: calc(env(safe-area-inset-top) + 6px); right: calc(env(safe-area-inset-right) + 6px); width: 56px; height: 56px; z-index: 20; opacity: 0; border: 0; background: transparent; }
+  #gear { position: fixed; top: calc(env(safe-area-inset-top) + 6px); right: calc(env(safe-area-inset-right) + 6px); width: 56px; height: 56px; z-index: 20; border: 0; background: transparent; color: var(--led-off); font-size: 22px; cursor: pointer; }
   #settings { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.94); display: none; overflow: auto; padding: 24px; font-size: 16px; color: var(--led); }
   #settings.open { display: block; }
   #settings .panel { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
@@ -107,11 +123,28 @@
   </div>
   <footer><span id="status">Starting</span><span id="loc"></span></footer>
 </div>
-<button id="gear" aria-label="Open settings"></button>
+<button id="gear" aria-label="Open settings">&#9881;</button>
 
 <div id="settings" role="dialog" aria-label="Settings">
   <div class="panel">
     <h2>FlightWall settings</h2>
+    <label>Mode
+      <select id="mode"><option value="area">Aircraft near me</option><option value="track">Track specific flights</option></select>
+    </label>
+    <label>Flights to track (comma-separated flight numbers, callsigns or tail numbers, up to 5 — e.g. UA969, ASA1303, N734BN)
+      <input id="track" type="text" autocapitalize="characters" autocorrect="off" placeholder="UA969, DL1234">
+    </label>
+    <div class="row">
+      <label>Color
+        <select id="theme"><option value="amber">Amber</option><option value="green">Green</option><option value="white">White</option><option value="ice">Ice blue</option><option value="red">Red</option></select>
+      </label>
+      <label>Text size
+        <select id="size"><option value="small">Small</option><option value="normal">Normal</option><option value="large">Large</option></select>
+      </label>
+      <label>LED dot effect
+        <select id="dots"><option value="off">Off</option><option value="light">Light</option><option value="strong">Strong</option></select>
+      </label>
+    </div>
     <div class="row">
       <label>Latitude <input id="lat" type="number" step="0.0001" inputmode="decimal"></label>
       <label>Longitude <input id="lon" type="number" step="0.0001" inputmode="decimal"></label>
@@ -138,7 +171,7 @@
       <button id="save">Save and close</button>
       <button class="quiet" id="close">Cancel</button>
     </div>
-    <p class="note">Live positions come from adsb.lol, a free volunteer ADS-B network, refreshed every 10 seconds. Routes come from the same network’s route database and are best-effort. Tap the top-right corner any time to come back here.</p>
+    <p class="note">Live positions come from adsb.lol, a free volunteer ADS-B network, refreshed every 10 seconds. Routes and airline names come from adsbdb.com and are best-effort. In tracking mode, a flight only appears while its transponder is being heard, so a flight that hasn’t taken off yet shows as waiting. Tap the top-right corner any time to come back here.</p>
   </div>
 </div>
 
@@ -148,14 +181,20 @@
   const $ = id => document.getElementById(id);
 
   // ---------- settings ----------
-  const DEFAULTS = { lat: 37.83, lon: -122.21, radius: 25, max: 5, minAlt: 0, fCom: true, fGa: true, fHeli: true, fGround: false, clockMode: '12', base: 'https://flightwall-proxy.jianwei-hoh.workers.dev' };
+  const DEFAULTS = { lat: 37.83, lon: -122.21, radius: 25, max: 5, minAlt: 0, fCom: true, fGa: true, fHeli: true, fGround: false, clockMode: '12', mode: 'area', track: '', theme: 'amber', size: 'normal', dots: 'light', base: 'https://flightwall-proxy.jianwei-hoh.workers.dev' };
   let S = { ...DEFAULTS };
   try { const raw = localStorage.getItem('flightwall'); if (raw) S = { ...DEFAULTS, ...JSON.parse(raw) }; } catch (e) {}
   function persist() { try { localStorage.setItem('flightwall', JSON.stringify(S)); } catch (e) {} }
+  function applyTheme() {
+    const r = document.documentElement;
+    r.dataset.theme = S.theme; r.dataset.size = S.size; r.dataset.dots = S.dots;
+  }
+  applyTheme();
 
   function openSettings() {
     $('lat').value = S.lat; $('lon').value = S.lon; $('radius').value = S.radius; $('max').value = S.max; $('minAlt').value = S.minAlt;
     $('fCom').checked = S.fCom; $('fGa').checked = S.fGa; $('fHeli').checked = S.fHeli; $('fGround').checked = S.fGround; $('clockMode').value = S.clockMode; $('base').value = S.base;
+    $('mode').value = S.mode; $('track').value = S.track; $('theme').value = S.theme; $('size').value = S.size; $('dots').value = S.dots;
     $('settings').classList.add('open');
   }
   function closeSettings() { $('settings').classList.remove('open'); }
@@ -170,7 +209,8 @@
     S.fCom = $('fCom').checked; S.fGa = $('fGa').checked; S.fHeli = $('fHeli').checked; S.fGround = $('fGround').checked;
     S.clockMode = $('clockMode').value;
     S.base = ($('base').value || DEFAULTS.base).replace(/\/+$/, '');
-    persist(); closeSettings(); routeCache.clear(); poll();
+    S.mode = $('mode').value; S.track = $('track').value.toUpperCase().replace(/\s+/g, ' ').trim(); S.theme = $('theme').value; S.size = $('size').value; S.dots = $('dots').value;
+    persist(); applyTheme(); closeSettings(); poll();
   });
   $('geo').addEventListener('click', () => {
     if (!navigator.geolocation) { $('status').textContent = 'Location not available on this device'; return; }
@@ -224,42 +264,89 @@
     return ['N','NE','E','SE','S','SW','W','NW'][Math.round(deg / 45) % 8];
   }
 
-  // ---------- routes ----------
-  const routeCache = new Map();
-  async function fetchRoutes(planes) {
-    const need = planes.filter(p => p.flight && !routeCache.has(p.flight));
-    if (!need.length) return;
+  // ---------- routes (adsbdb.com) ----------
+  const routeCache = new Map(); // callsign -> {o,d,oLat,oLon,dLat,dLon,airline,icao} | null
+  async function routeFor(cs) {
+    if (!cs) return null;
+    if (routeCache.has(cs)) return routeCache.get(cs);
+    let out = null;
     try {
-      const r = await fetch(S.base + '/api/0/routeset', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planes: need.map(p => ({ callsign: p.flight, lat: p.lat, lng: p.lon })) })
-      });
-      if (!r.ok) throw 0;
-      const data = await r.json();
-      for (const row of data || []) {
-        const codes = row._airport_codes_iata || row.airport_codes || '';
-        routeCache.set(row.callsign, codes && codes !== 'unknown' ? codes.split('-') : null);
+      const r = await fetch('https://api.adsbdb.com/v0/callsign/' + encodeURIComponent(cs));
+      if (r.ok) {
+        const fr = (await r.json()).response?.flightroute;
+        if (fr) out = {
+          o: fr.origin?.iata_code || fr.origin?.icao_code || '', d: fr.destination?.iata_code || fr.destination?.icao_code || '',
+          oLat: fr.origin?.latitude, oLon: fr.origin?.longitude, dLat: fr.destination?.latitude, dLon: fr.destination?.longitude,
+          airline: fr.airline?.name || '', icao: fr.callsign_icao || cs
+        };
       }
-      for (const p of need) if (!routeCache.has(p.flight)) routeCache.set(p.flight, null);
-    } catch (e) { for (const p of need) routeCache.set(p.flight, null); }
+    } catch (e) {}
+    routeCache.set(cs, out);
+    return out;
+  }
+  async function fetchRoutes(planes) { await Promise.all(planes.filter(p => p.flight).map(p => routeFor(p.flight))); }
+  function hav(a, b, c, d) {
+    const R = 3958.8, toR = x => x * Math.PI / 180, dLat = toR(c - a), dLon = toR(d - b);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(toR(a)) * Math.cos(toR(c)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  function progress(a, rt) {
+    if (!rt || rt.oLat == null || rt.dLat == null || a.lat == null) return null;
+    const total = hav(rt.oLat, rt.oLon, rt.dLat, rt.dLon), left = hav(a.lat, a.lon, rt.dLat, rt.dLon);
+    if (!total) return null;
+    return { pct: Math.max(0, Math.min(100, Math.round(100 * (1 - left / total)))), left };
   }
 
   // ---------- flights ----------
   let timer = null;
+  function norm(a) {
+    return {
+      hex: a.hex, flight: (a.flight || '').trim(), type: a.t || '', cat: a.category || '',
+      alt: a.alt_baro === 'ground' ? 0 : (typeof a.alt_baro === 'number' ? a.alt_baro : (a.alt_geom || null)),
+      ground: a.alt_baro === 'ground',
+      gs: a.gs, lat: a.lat, lon: a.lon, dstMi: a.dst != null ? a.dst * 1.15078 : (a.lat != null ? hav(S.lat, S.lon, a.lat, a.lon) : null), dir: a.dir
+    };
+  }
+  async function pollTracked() {
+    const wanted = S.track.split(/[,\s]+/).map(x => x.trim().toUpperCase()).filter(Boolean).slice(0, 5);
+    $('loc').textContent = 'Tracking ' + wanted.length + ' flight' + (wanted.length === 1 ? '' : 's');
+    if (!wanted.length) { render([], 0); $('status').textContent = 'Add flights to track in settings (top-right corner)'; return; }
+    const rows = [];
+    for (const w of wanted) {
+      const rt = await routeFor(w);
+      const icao = (rt && rt.icao) || w;
+      let a = null;
+      try {
+        const r = await fetch(`${S.base}/v2/callsign/${encodeURIComponent(icao)}`, { cache: 'no-store' });
+        if (r.ok) { const d = await r.json(); if (d.ac && d.ac.length) a = norm(d.ac[0]); }
+        if (!a && /^N\d/.test(icao)) {
+          const r2 = await fetch(`${S.base}/v2/reg/${encodeURIComponent(icao)}`, { cache: 'no-store' });
+          if (r2.ok) { const d2 = await r2.json(); if (d2.ac && d2.ac.length) a = norm(d2.ac[0]); }
+        }
+      } catch (e) { if (e instanceof TypeError) throw e; }
+      if (!a) a = { hex: '', flight: w, type: '', cat: '', alt: null, ground: false, gs: null, lat: null, lon: null, dstMi: null, dir: null, away: true };
+      else if (icao !== w) routeCache.set(a.flight, rt);
+      rows.push(a);
+    }
+    render(rows, rows.length, true);
+    $('status').textContent = 'Live · adsb.lol'; $('status').className = '';
+  }
   async function poll() {
     clearTimeout(timer);
+    try {
+      if (S.mode === 'track') { await pollTracked(); timer = setTimeout(poll, 15000); return; }
+    } catch (e) {
+      const blocked = e instanceof TypeError;
+      $('status').textContent = blocked ? 'Browser blocked the data server — set a proxy in settings (top-right corner)' : 'No data — check Wi‑Fi (' + (e.message || 'error') + ')';
+      $('status').className = 'err'; timer = setTimeout(poll, 15000); return;
+    }
     const nm = Math.max(1, Math.round(S.radius / 1.15078));
     $('loc').textContent = `${S.lat.toFixed(2)}, ${S.lon.toFixed(2)} · ${S.radius} mi`;
     try {
       const r = await fetch(`${S.base}/v2/lat/${S.lat}/lon/${S.lon}/dist/${nm}`, { cache: 'no-store' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const data = await r.json();
-      let ac = (data.ac || []).map(a => ({
-        hex: a.hex, flight: (a.flight || '').trim(), type: a.t || '', cat: a.category || '',
-        alt: a.alt_baro === 'ground' ? 0 : (typeof a.alt_baro === 'number' ? a.alt_baro : (a.alt_geom || null)),
-        ground: a.alt_baro === 'ground',
-        gs: a.gs, lat: a.lat, lon: a.lon, dstMi: a.dst != null ? a.dst * 1.15078 : null, dir: a.dir
-      }));
+      let ac = (data.ac || []).map(norm);
       ac = ac.filter(a => {
         if (a.ground && !S.fGround) return false;
         if (a.alt != null && a.alt < S.minAlt && !a.ground) return false;
@@ -285,25 +372,26 @@
     timer = setTimeout(poll, 10000);
   }
 
-  function render(list, total) {
+  function render(list, total, tracked) {
     const wrap = $('flights');
     if (!list.length) { wrap.style.display = 'none'; $('idle').style.display = 'flex'; $('count').textContent = ''; return; }
     $('idle').style.display = 'none'; wrap.style.display = 'flex';
-    $('count').textContent = `${list.length} of ${total} nearby`;
+    $('count').textContent = tracked ? 'Tracked flights' : `${list.length} of ${total} nearby`;
     wrap.innerHTML = '';
     for (const a of list) {
-      const route = a.flight ? routeCache.get(a.flight) : null;
+      const rt = a.flight ? routeCache.get(a.flight) : null;
+      const pr = tracked ? progress(a, rt) : null;
       const el = document.createElement('div');
-      el.className = 'flight' + (a.cat === 'A7' ? ' heli' : '');
+      el.className = 'flight' + (a.cat === 'A7' ? ' heli' : '') + (a.away ? ' away' : '');
       el.innerHTML = `
         <div class="call">${esc(a.flight || a.hex.toUpperCase())}</div>
-        <div class="air">${esc(airlineFor(a.flight) || (a.cat === 'A7' ? 'Helicopter' : ''))}</div>
-        <div class="route">${route && route.length >= 2 ? esc(route[0]) + '<span class="arrow">&gt;</span>' + esc(route[route.length - 1]) : '<span style="color:var(--led-off)">----</span>'}</div>
+        <div class="air">${esc((rt && rt.airline) || airlineFor(a.flight) || (a.cat === 'A7' ? 'Helicopter' : ''))}</div>
+        <div class="route">${rt && rt.o && rt.d ? esc(rt.o) + '<span class="arrow">&gt;</span>' + esc(rt.d) : '<span style="color:var(--led-off)">----</span>'}</div>
         <div class="type">${esc(TYPES[a.type] || a.type || '')}</div>
-        <div class="alt num">${a.ground ? 'ground' : (a.alt != null ? a.alt.toLocaleString() + ' ft' : '')}</div>
+        <div class="alt num">${a.away ? 'waiting for signal' : a.ground ? 'ground' : (a.alt != null ? a.alt.toLocaleString() + ' ft' : '')}</div>
         <div class="spd num">${a.gs != null ? Math.round(a.gs * 1.15078) + ' mph' : ''}</div>
-        <div class="dst num">${a.dstMi != null ? a.dstMi.toFixed(1) + ' mi' : ''}</div>
-        <div class="dir num">${compass(a.dir)}</div>`;
+        <div class="dst num">${pr ? Math.round(pr.left).toLocaleString() + ' mi to go' : (a.dstMi != null ? a.dstMi.toFixed(1) + ' mi' : '')}</div>
+        ${pr ? `<div class="prog num">${pr.pct}%<span class="bar"><i style="width:${pr.pct}%"></i></span></div>` : `<div class="dir num">${compass(a.dir)}</div>`}`;
       wrap.appendChild(el);
     }
   }
